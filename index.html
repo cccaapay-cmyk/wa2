@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Redirecting...</title>
+
+<script>
+const numbers = [
+  "https://wa.me/4917625489677",
+  "https://wa.me/4917625490442",
+  "https://wa.me/4917625801572"
+];
+
+// 真随机算法
+const randomIndex = Math.floor(Math.random() * numbers.length);
+
+// 防缓存 + 真跳转
+setTimeout(function(){
+  window.location.replace(numbers[randomIndex]);
+}, 50);
+
+</script>
+
+</head>
+<body>
+Redirecting...
+</body>
+</html>
