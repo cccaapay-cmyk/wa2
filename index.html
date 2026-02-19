@@ -2,27 +2,31 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Redirecting...</title>
-
 <script>
-const numbers = [
-  "https://wa.me/4917625489677",
-  "https://wa.me/4917625490442",
-  "https://wa.me/4917625801572"
+const routes = [
+  { url: "https://wa.me/4917625489677", weight: 30 }, // 30%
+  { url: "https://wa.me/4917625490442", weight: 35 }, // 35%
+  { url: "https://wa.me/4917625801572", weight: 35 }, // 35%
 ];
 
-// 真随机算法
-const randomIndex = Math.floor(Math.random() * numbers.length);
+function pickWeighted(list) {
+  const total = list.reduce((s, x) => s + x.weight, 0);
+  let r = Math.random() * total;
+  for (const item of list) {
+    r -= item.weight;
+    if (r < 0) return item.url;
+  }
+  return list[list.length - 1].url; // 兜底
+}
 
-// 防缓存 + 真跳转
-setTimeout(function(){
-  window.location.replace(numbers[randomIndex]);
-}, 50);
+const picked = pickWeighted(routes);
 
+// 防缓存：每次都带时间戳
+const finalUrl = picked + "?t=" + Date.now();
+
+// 强制跳转（不留历史记录，减少“返回导致固定”的情况）
+window.location.replace(finalUrl);
 </script>
-
 </head>
-<body>
-Redirecting...
-</body>
+<body></body>
 </html>
