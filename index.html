@@ -1,32 +1,55 @@
-<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
 <script>
-const routes = [
-  { url: "https://wa.me/4917625489677", weight: 34 }, // 34%
-  { url: "https://wa.me/4917625490442", weight: 33 }, // 33%
-  { url: "https://wa.me/4917625801572", weight: 33 }, // 33%
-];
+(function () {
+  var links = [
+    "https://wa.me/4917625481228",
+    "https://wa.me/4917625817598",
+    "https://wa.me/4917625820244",
+    "https://wa.me/4917625818739",
+    "https://wa.me/4917625840334",
+    "https://wa.me/4917625489677",
+    "https://wa.me/4917625490442",
+    "https://wa.me/4917625801572"
+  ];
 
-function pickWeighted(list) {
-  const total = list.reduce((s, x) => s + x.weight, 0);
-  let r = Math.random() * total;
-  for (const item of list) {
-    r -= item.weight;
-    if (r < 0) return item.url;
+  var bagKey = "wa_shuffle_bag_v1";
+  var idxKey = "wa_shuffle_idx_v1";
+
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
   }
-  return list[list.length - 1].url; // 兜底
-}
 
-const picked = pickWeighted(routes);
+  // 读取/初始化“随机轮询队列”
+  var bag;
+  try { bag = JSON.parse(localStorage.getItem(bagKey) || "null"); } catch (e) { bag = null; }
 
-// 防缓存：每次都带时间戳
-const finalUrl = picked + "?t=" + Date.now();
+  if (!Array.isArray(bag) || bag.length !== links.length) {
+    bag = shuffle(links.slice());
+    localStorage.setItem(bagKey, JSON.stringify(bag));
+    localStorage.setItem(idxKey, "0");
+  }
 
-// 强制跳转（不留历史记录，减少“返回导致固定”的情况）
-window.location.replace(finalUrl);
+  var idx = parseInt(localStorage.getItem(idxKey) || "0", 10);
+  if (!isFinite(idx) || idx < 0) idx = 0;
+
+  // 取当前一个号
+  var url = bag[idx % bag.length];
+  idx++;
+
+  // 一轮结束后重新洗牌（保证每轮均匀 + 下一轮仍随机）
+  if (idx % bag.length === 0) {
+    bag = shuffle(links.slice());
+    localStorage.setItem(bagKey, JSON.stringify(bag));
+    idx = 0;
+  }
+  localStorage.setItem(idxKey, String(idx));
+
+  // 可选：延迟更自然（你要秒跳就改成 0 或删掉 setTimeout）
+  setTimeout(function () {
+    window.location.replace(url);
+  }, 800);
+})();
 </script>
-</head>
-<body></body>
-</html>
