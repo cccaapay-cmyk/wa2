@@ -1,53 +1,174 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LINE Redirect</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
 <script>
-(function () {
-  var links = [
-    "https://wa.me/4915211857304",
-    "https://wa.me/4915212030191",
-    "https://wa.me/4915211402895",
-    "https://wa.me/4915211532957",
-    "https://wa.me/4915211268639",
-    "https://wa.me/4915211301699"
+(() => {
+  /**
+   * 这里填你的 LINE ID
+   * 不要加 @
+   * 例如你的 LINE 是 @abc123
+   * 这里就写 "abc123"
+   */
+  const rawLineIds = [
+    "lineid01",
+    "lineid02",
+    "lineid03",
+    "lineid04"
   ];
 
-  var bagKey = "wa_shuffle_bag_v1";
-  var idxKey = "wa_shuffle_idx_v1";
+  /**
+   * 本地缓存 key
+   */
+  const KEY_BAG = "line_shuffle_bag_v1";
+  const KEY_LAST = "line_last_pick_v1";
 
-  function shuffle(arr) {
-    for (var i = arr.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  /**
+   * 清洗数据：去空、去重
+   */
+  function clean(list) {
+    const seen = new Set();
+    const result = [];
+
+    for (let i = 0; i < list.length; i++) {
+      const value = String(list[i]).trim().replace(/^@/, "");
+      if (value && !seen.has(value)) {
+        seen.add(value);
+        result.push(value);
+      }
     }
-    return arr;
+
+    return result;
   }
 
-  // 读取/初始化“随机轮询队列”
-  var bag;
-  try { bag = JSON.parse(localStorage.getItem(bagKey) || "null"); } catch (e) { bag = null; }
+  const lineIds = clean(rawLineIds);
 
-  if (!Array.isArray(bag) || bag.length !== links.length) {
-    bag = shuffle(links.slice());
-    localStorage.setItem(bagKey, JSON.stringify(bag));
-    localStorage.setItem(idxKey, "0");
+  /**
+   * 洗牌
+   */
+  function shuffle(arr) {
+    const copy = arr.slice();
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
   }
 
-  var idx = parseInt(localStorage.getItem(idxKey) || "0", 10);
-  if (!isFinite(idx) || idx < 0) idx = 0;
-
-  // 取当前一个号
-  var url = bag[idx % bag.length];
-  idx++;
-
-  // 一轮结束后重新洗牌（保证每轮均匀 + 下一轮仍随机）
-  if (idx % bag.length === 0) {
-    bag = shuffle(links.slice());
-    localStorage.setItem(bagKey, JSON.stringify(bag));
-    idx = 0;
+  /**
+   * 读取本地 bag
+   */
+  function readBag() {
+    try {
+      const value = JSON.parse(localStorage.getItem(KEY_BAG) || "[]");
+      return Array.isArray(value) ? value : [];
+    } catch (e) {
+      return [];
+    }
   }
-  localStorage.setItem(idxKey, String(idx));
 
-  // 可选：延迟更自然（你要秒跳就改成 0 或删掉 setTimeout）
-  setTimeout(function () {
-    window.location.replace(url);
-  }, 800);
+  /**
+   * 保存本地 bag
+   */
+  function saveBag(bag) {
+    localStorage.setItem(KEY_BAG, JSON.stringify(bag));
+  }
+
+  /**
+   * 读取上次使用的 ID
+   */
+  function readLast() {
+    return (localStorage.getItem(KEY_LAST) || "").trim();
+  }
+
+  /**
+   * 保存上次使用的 ID
+   */
+  function saveLast(value) {
+    localStorage.setItem(KEY_LAST, value);
+  }
+
+  /**
+   * 获取下一个 LINE ID
+   * 逻辑：
+   * 1. bag 空了 -> 重新洗牌
+   * 2. 尽量避免与上次重复
+   */
+  function getNextLineId() {
+    if (!lineIds.length) return "";
+
+    if (lineIds.length === 1) {
+      const onlyOne = lineIds[0];
+      saveLast(onlyOne);
+      return onlyOne;
+    }
+
+    let bag = readBag().filter(id => lineIds.includes(id));
+    const last = readLast();
+
+    if (!bag.length) {
+      bag = shuffle(lineIds);
+
+      // 尽量避免重洗后第一个还是上次那个
+      if (bag.length > 1 && bag[0] === last) {
+        [bag[0], bag[1]] = [bag[1], bag[0]];
+      }
+    }
+
+    let picked = bag.shift();
+
+    // 双保险：如果当前 pick 和上次相同，且 bag 里还有别的，就换一个
+    if (picked === last && bag.length) {
+      const next = bag.shift();
+      bag.unshift(picked);
+      picked = next;
+    }
+
+    saveBag(bag);
+    saveLast(picked);
+
+    return picked;
+  }
+
+  /**
+   * 构造 LINE 跳转链接
+   * 常用格式：
+   * https://line.me/ti/p/~LINE_ID
+   */
+  function buildLineUrl(lineId) {
+    return "https://line.me/ti/p/~" + encodeURIComponent(lineId);
+  }
+
+  /**
+   * 主流程
+   */
+  const nextLineId = getNextLineId();
+
+  if (!nextLineId) {
+    document.body.style.display = "block";
+    document.body.innerHTML = "<p style='padding:20px;font-family:Arial,sans-serif;'>LINE ID 未配置</p>";
+    return;
+  }
+
+  const targetUrl = buildLineUrl(nextLineId);
+
+  // 自动跳转
+  location.replace(targetUrl);
 })();
 </script>
+
+</body>
+</html>
