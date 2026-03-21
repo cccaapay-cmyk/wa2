@@ -5,15 +5,66 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Trabajo Manual</title>
 <style>
-html, body{
+html,body{
   margin:0;
   padding:0;
-  display:none;
+  font-family:Arial,sans-serif;
   background:#f5f5f5;
+}
+.wrap{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:24px;
+  box-sizing:border-box;
+}
+.box{
+  max-width:420px;
+}
+h1{
+  margin:0 0 12px;
+  font-size:28px;
+}
+p{
+  margin:0 0 20px;
+  font-size:18px;
+  color:#333;
+  line-height:1.6;
+}
+a.btn{
+  display:inline-block;
+  padding:14px 28px;
+  background:#06C755;
+  color:#fff;
+  text-decoration:none;
+  border-radius:10px;
+  font-size:18px;
+  font-weight:bold;
+}
+.small{
+  margin-top:14px;
+  font-size:14px;
+  color:#666;
+}
+.hidden{
+  display:none;
 }
 </style>
 </head>
 <body>
+
+<div class="wrap hidden" id="fallback">
+  <div class="box">
+    <h1>Contactar por LINE</h1>
+    <p>
+      Si LINE no se abrió automáticamente, haga clic abajo.
+    </p>
+    <a class="btn" id="lineBtn" href="#">Abrir LINE</a>
+    <div class="small">Si está en PC, puede ver la página o el código QR de LINE.</div>
+  </div>
+</div>
 
 <script>
 (() => {
@@ -83,13 +134,40 @@ html, body{
   }
 
   const id = pick();
-
-  if (id) {
-    location.href = "line://ti/p/~" + encodeURIComponent(id);
-  } else {
-    document.body.style.display = "block";
-    document.body.textContent = "No valid LINE ID found.";
+  if (!id) {
+    document.getElementById("fallback").classList.remove("hidden");
+    document.querySelector("p").textContent = "No valid LINE ID found.";
+    return;
   }
+
+  const appUrl = "line://ti/p/~" + encodeURIComponent(id);
+  const webUrl = "https://line.me/R/ti/p/" + encodeURIComponent(id);
+
+  const btn = document.getElementById("lineBtn");
+  btn.href = webUrl;
+
+  const fallback = document.getElementById("fallback");
+
+  // 先尝试拉起 LINE App
+  const start = Date.now();
+  window.location.href = appUrl;
+
+  // 如果没有成功拉起，回退到网页链接
+  setTimeout(() => {
+    const elapsed = Date.now() - start;
+
+    // 页面还在当前页，说明大概率没拉起成功
+    if (document.visibilityState === "visible" && elapsed < 2500) {
+      window.location.replace(webUrl);
+    }
+  }, 800);
+
+  // 再兜底显示按钮，避免用户看到空白页
+  setTimeout(() => {
+    if (document.visibilityState === "visible") {
+      fallback.classList.remove("hidden");
+    }
+  }, 1400);
 })();
 </script>
 
