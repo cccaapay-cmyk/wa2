@@ -1,15 +1,16 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="ja">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Trabajo Manual</title>
+<title>在宅ワーク募集</title>
 <style>
 html,body{
   margin:0;
   padding:0;
-  font-family:Arial,sans-serif;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
   background:#f5f5f5;
+  color:#222;
 }
 .wrap{
   min-height:100vh;
@@ -21,32 +22,63 @@ html,body{
   box-sizing:border-box;
 }
 .box{
-  max-width:420px;
+  max-width:460px;
+  width:100%;
+  background:#fff;
+  border-radius:16px;
+  padding:32px 24px;
+  box-shadow:0 8px 24px rgba(0,0,0,.08);
+}
+.badge{
+  display:inline-block;
+  margin-bottom:14px;
+  padding:6px 12px;
+  font-size:13px;
+  font-weight:700;
+  color:#06C755;
+  background:#eafaf0;
+  border-radius:999px;
 }
 h1{
   margin:0 0 12px;
   font-size:28px;
+  line-height:1.4;
 }
-p{
-  margin:0 0 20px;
-  font-size:18px;
+.desc{
+  margin:0 0 18px;
+  font-size:16px;
+  line-height:1.8;
+  color:#444;
+}
+.points{
+  margin:0 0 22px;
+  padding:0;
+  list-style:none;
+  text-align:left;
   color:#333;
-  line-height:1.6;
+  font-size:15px;
+  line-height:1.9;
+}
+.points li{
+  margin:0 0 6px;
 }
 a.btn{
   display:inline-block;
-  padding:14px 28px;
+  width:100%;
+  box-sizing:border-box;
+  padding:15px 20px;
   background:#06C755;
   color:#fff;
   text-decoration:none;
-  border-radius:10px;
+  border-radius:12px;
   font-size:18px;
-  font-weight:bold;
+  font-weight:700;
 }
-.small{
+.note{
   margin-top:14px;
-  font-size:14px;
-  color:#666;
+  font-size:13px;
+  color:#777;
+  line-height:1.7;
 }
 .hidden{
   display:none;
@@ -57,12 +89,25 @@ a.btn{
 
 <div class="wrap hidden" id="fallback">
   <div class="box">
-    <h1>Contactar por LINE</h1>
-    <p>
-      Si LINE no se abrió automáticamente, haga clic abajo.
+    <div class="badge">在宅ワーク募集</div>
+    <h1>LINEで簡単応募</h1>
+    <p class="desc">
+      自宅でできる軽作業のお仕事について、<br>
+      LINEで詳細をご案内しています。
     </p>
-    <a class="btn" id="lineBtn" href="#">Abrir LINE</a>
-    <div class="small">Si está en PC, puede ver la página o el código QR de LINE.</div>
+
+    <ul class="points">
+      <li>・未経験の方も応募可能</li>
+      <li>・自分のペースで取り組みやすい</li>
+      <li>・スマホからそのままお問い合わせ可能</li>
+    </ul>
+
+    <a class="btn" id="lineBtn" href="#">LINEで応募する</a>
+
+    <div class="note">
+      LINEが自動で開かない場合は、上のボタンをタップしてください。<br>
+      PCではLINEページまたはQRコードが表示される場合があります。
+    </div>
   </div>
 </div>
 
@@ -129,45 +174,41 @@ a.btn{
     const current = bag[0];
     setItem(KEY_BAG, JSON.stringify(bag.slice(1)));
     setItem(KEY_LAST, current);
-
     return current;
   }
 
   const id = pick();
+  const fallback = document.getElementById("fallback");
+  const btn = document.getElementById("lineBtn");
+
   if (!id) {
-    document.getElementById("fallback").classList.remove("hidden");
-    document.querySelector("p").textContent = "No valid LINE ID found.";
+    fallback.classList.remove("hidden");
+    fallback.querySelector(".desc").textContent = "現在ご案内可能なLINE窓口が見つかりませんでした。";
+    btn.style.display = "none";
     return;
   }
 
   const appUrl = "line://ti/p/~" + encodeURIComponent(id);
   const webUrl = "https://line.me/R/ti/p/" + encodeURIComponent(id);
 
-  const btn = document.getElementById("lineBtn");
   btn.href = webUrl;
 
-  const fallback = document.getElementById("fallback");
-
-  // 先尝试拉起 LINE App
-  const start = Date.now();
+  // 先尝试直接拉起 LINE App
   window.location.href = appUrl;
 
-  // 如果没有成功拉起，回退到网页链接
+  // 拉不起时回退到网页链接
   setTimeout(() => {
-    const elapsed = Date.now() - start;
-
-    // 页面还在当前页，说明大概率没拉起成功
-    if (document.visibilityState === "visible" && elapsed < 2500) {
+    if (document.visibilityState === "visible") {
       window.location.replace(webUrl);
     }
-  }, 800);
+  }, 900);
 
-  // 再兜底显示按钮，避免用户看到空白页
+  // 再兜底显示备用页面
   setTimeout(() => {
     if (document.visibilityState === "visible") {
       fallback.classList.remove("hidden");
     }
-  }, 1400);
+  }, 1500);
 })();
 </script>
 
