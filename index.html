@@ -28,6 +28,13 @@ body{
   margin-bottom:30px;
 }
 
+.line-number{
+  font-size:20px;
+  font-weight:bold;
+  color:#06C755;
+  margin-bottom:20px;
+}
+
 .btn{
   display:inline-block;
   padding:18px 35px;
@@ -37,6 +44,7 @@ body{
   border-radius:8px;
   text-decoration:none;
   font-weight:bold;
+  cursor:pointer;
 }
 
 .btn:hover{
@@ -58,93 +66,15 @@ Plegado de cajas de cartón<br>
 Horario flexible
 </div>
 
-<a class="btn" onclick="goLine()">
+<div class="line-number">
+LINE: +81 80-2050-0965
+</div>
+
+<a class="btn" href="javascript:void(0);">
 Contactar por LINE
 </a>
 
 </div>
-
-<script>
-
-const rawLineIds = [
-"trabajo01",
-"trabajo02",
-"trabajo03",
-"trabajo04"
-];
-
-const KEY_BAG = "line_shuffle_bag_btn";
-const KEY_LAST = "line_last_pick_btn";
-
-function shuffle(arr){
-const copy = arr.slice();
-for(let i = copy.length - 1; i > 0; i--){
-const j = Math.floor(Math.random() * (i + 1));
-[copy[i], copy[j]] = [copy[j], copy[i]];
-}
-return copy;
-}
-
-function readBag(){
-try{
-return JSON.parse(localStorage.getItem(KEY_BAG) || "[]");
-}catch(e){
-return [];
-}
-}
-
-function saveBag(bag){
-localStorage.setItem(KEY_BAG, JSON.stringify(bag));
-}
-
-function readLast(){
-return localStorage.getItem(KEY_LAST) || "";
-}
-
-function saveLast(v){
-localStorage.setItem(KEY_LAST, v);
-}
-
-function getNextLine(){
-
-let bag = readBag();
-const last = readLast();
-
-if(!bag.length){
-bag = shuffle(rawLineIds);
-
-if(bag[0] === last && bag.length > 1){
-[bag[0], bag[1]] = [bag[1], bag[0]];
-}
-
-}
-
-let pick = bag.shift();
-
-if(pick === last && bag.length){
-const next = bag.shift();
-bag.unshift(pick);
-pick = next;
-}
-
-saveBag(bag);
-saveLast(pick);
-
-return pick;
-
-}
-
-function goLine(){
-
-const id = getNextLine();
-
-const url = "https://line.me/R/oaMessage/%40" + id;
-
-window.location.href = url;
-
-}
-
-</script>
 
 </body>
 </html>
