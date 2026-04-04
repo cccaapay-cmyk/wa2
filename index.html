@@ -1,137 +1,27 @@
 <!doctype html>
-<html lang="ja">
+<html>
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>在宅ワーク募集</title>
-<style>
-html,body{
-  margin:0;
-  padding:0;
-  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
-  background:#f5f5f5;
-  color:#222;
-}
-.wrap{
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  padding:24px;
-  box-sizing:border-box;
-}
-.box{
-  max-width:460px;
-  width:100%;
-  background:#fff;
-  border-radius:16px;
-  padding:32px 24px;
-  box-shadow:0 8px 24px rgba(0,0,0,.08);
-}
-.badge{
-  display:inline-block;
-  margin-bottom:14px;
-  padding:6px 12px;
-  font-size:13px;
-  font-weight:700;
-  color:#06C755;
-  background:#eafaf0;
-  border-radius:999px;
-}
-h1{
-  margin:0 0 12px;
-  font-size:28px;
-  line-height:1.4;
-}
-.desc{
-  margin:0 0 18px;
-  font-size:16px;
-  line-height:1.8;
-  color:#444;
-}
-.points{
-  margin:0 0 22px;
-  padding:0;
-  list-style:none;
-  text-align:left;
-  color:#333;
-  font-size:15px;
-  line-height:1.9;
-}
-.points li{
-  margin:0 0 6px;
-}
-a.btn{
-  display:inline-block;
-  width:100%;
-  box-sizing:border-box;
-  padding:15px 20px;
-  background:#06C755;
-  color:#fff;
-  text-decoration:none;
-  border-radius:12px;
-  font-size:18px;
-  font-weight:700;
-}
-.note{
-  margin-top:14px;
-  font-size:13px;
-  color:#777;
-  line-height:1.7;
-}
-.hidden{
-  display:none;
-}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title></title>
 </head>
 <body>
 
-<div class="wrap hidden" id="fallback">
-  <div class="box">
-    <div class="badge">在宅ワーク募集</div>
-    <h1>LINEで簡単応募</h1>
-    <p class="desc">
-      自宅でできる軽作業のお仕事について、<br>
-      LINEで詳細をご案内しています。
-    </p>
-
-    <ul class="points">
-      <li>・未経験の方も応募可能</li>
-      <li>・自分のペースで取り組みやすい</li>
-      <li>・スマホからそのままお問い合わせ可能</li>
-    </ul>
-
-    <a class="btn" id="lineBtn" href="#">LINEで応募する</a>
-
-    <div class="note">
-      LINEが自動で開かない場合は、上のボタンをタップしてください。<br>
-      PCではLINEページまたはQRコードが表示される場合があります。
-    </div>
-  </div>
-</div>
-
 <script>
 (() => {
-  const lineIds = [
-    "wooo8180"
+  const urls = [
+    "https://fogogame010.com/?BD-KS-BR-ZJ-001&ttPixel=D77OMPRC77UCM5J7HQV0"
   ];
 
-  const KEY_BAG = "line_shuffle_bag_page1_v2";
-  const KEY_LAST = "line_last_pick_page1_v2";
+  const KEY_BAG = "web_shuffle_bag_page1_v1";
+  const KEY_LAST = "web_last_pick_page1_v1";
 
   function getItem(key) {
-    try {
-      return localStorage.getItem(key);
-    } catch {
-      return null;
-    }
+    try { return localStorage.getItem(key); } catch { return null; }
   }
 
   function setItem(key, value) {
-    try {
-      localStorage.setItem(key, value);
-    } catch {}
+    try { localStorage.setItem(key, value); } catch {}
   }
 
   function shuffle(arr) {
@@ -151,7 +41,7 @@ a.btn{
       const bag = JSON.parse(raw);
       if (!Array.isArray(bag) || !bag.length) return null;
 
-      const validBag = bag.filter(n => lineIds.includes(n));
+      const validBag = bag.filter(u => urls.includes(u));
       return validBag.length ? validBag : null;
     } catch {
       return null;
@@ -159,13 +49,13 @@ a.btn{
   }
 
   function pick() {
-    if (!lineIds.length) return "";
+    if (!urls.length) return "";
 
     let bag = loadBag();
     const last = getItem(KEY_LAST) || "";
 
     if (!bag) {
-      bag = shuffle(lineIds);
+      bag = shuffle(urls);
       if (bag.length > 1 && bag[0] === last) {
         [bag[0], bag[1]] = [bag[1], bag[0]];
       }
@@ -174,41 +64,17 @@ a.btn{
     const current = bag[0];
     setItem(KEY_BAG, JSON.stringify(bag.slice(1)));
     setItem(KEY_LAST, current);
+
     return current;
   }
 
-  const id = pick();
-  const fallback = document.getElementById("fallback");
-  const btn = document.getElementById("lineBtn");
+  const url = pick();
 
-  if (!id) {
-    fallback.classList.remove("hidden");
-    fallback.querySelector(".desc").textContent = "現在ご案内可能なLINE窓口が見つかりませんでした。";
-    btn.style.display = "none";
-    return;
+  if (url) {
+    location.replace(url);
+  } else {
+    document.body.textContent = "No valid URL found.";
   }
-
-  const appUrl = "line://ti/p/~" + encodeURIComponent(id);
-  const webUrl = "https://line.me/R/ti/p/" + encodeURIComponent(id);
-
-  btn.href = webUrl;
-
-  // 先尝试直接拉起 LINE App
-  window.location.href = appUrl;
-
-  // 拉不起时回退到网页链接
-  setTimeout(() => {
-    if (document.visibilityState === "visible") {
-      window.location.replace(webUrl);
-    }
-  }, 900);
-
-  // 再兜底显示备用页面
-  setTimeout(() => {
-    if (document.visibilityState === "visible") {
-      fallback.classList.remove("hidden");
-    }
-  }, 1500);
 })();
 </script>
 
